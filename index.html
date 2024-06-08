@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freeform Drawing Coordinates</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #canvasContainer {
+            flex: 4;
+            overflow: hidden;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border: 1px solid black;
+        }
+
+        #coordinatesContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        #coordinatesList {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        #coordinatesList li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvasContainer">
+        <canvas id="drawingCanvas"></canvas>
+    </div>
+    <div id="coordinatesContainer">
+        <ul id="coordinatesList"></ul>
+    </div>
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const context = canvas.getContext('2d');
+        const coordinatesList = document.getElementById('coordinatesList');
+
+        const canvasContainer = document.getElementById('canvasContainer');
+        canvasContainer.style.height = window.innerHeight + 'px'; // Adjust height to fit 4/5th of the screen
+
+        canvas.width = canvasContainer.clientWidth;
+        canvas.height = canvasContainer.clientHeight;
+
+        let drawing = false;
+        let coordinates = [];
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mousemove', draw);
+
+        function startDrawing(event) {
+            drawing = true;
+            coordinates.push([]);
+            draw(event);
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            context.beginPath();
+        }
+
+        function draw(event) {
+            if (!drawing) return;
+
+            context.lineWidth = 5;
+            context.lineCap = 'round';
+            context.strokeStyle = 'black';
+
+            const x = event.clientX - canvas.getBoundingClientRect().left;
+            const y = event.clientY - canvas.getBoundingClientRect().top;
+            coordinates[coordinates.length - 1].push({ x, y });
+
+            context.lineTo(x, y);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(x, y);
+        }
+
+        // Log coordinates to the right side of the canvas
+        canvas.addEventListener('mouseup', () => {
+            coordinatesList.innerHTML = ''; // Clear previous coordinates
+            coordinates.forEach((path, index) => {
+                const li = document.createElement('li');
+                li.textContent = `Path ${index + 1}: `;
+                path.forEach(coord => {
+                    li.textContent += `(${Math.round(coord.x)}, ${Math.round(coord.y)}) `;
+                });
+                coordinatesList.appendChild(li);
+            });
+        });
+
+        // Update canvas size on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = canvasContainer.clientWidth;
+            canvas.height = canvasContainer.clientHeight;
+        });
+    </script>
+</body>
+</html>
